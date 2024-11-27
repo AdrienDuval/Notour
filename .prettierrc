@@ -1,0 +1,6 @@
+{
+  "singleQuote": false,
+  "parser": "flow",
+  "semi": true,
+  "tabWidth" : 2
+}
