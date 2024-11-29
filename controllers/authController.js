@@ -3,6 +3,7 @@ const User = require('./../models/userModel');
 const catchAsync = require('../utils/catchAsync');
 const AppError = require('./../utils/appError');
 const { json } = require('express');
+const { applyTimestamps } = require('../models/tourModel');
 
 const signToken = id => {
     return jwt.sign({ id }, process.env.JWT_SECRET, {
@@ -60,4 +61,27 @@ exports.login = catchAsync(async (req, res, next) => {
         status: 'success',
         token
     });
+})
+
+exports.protect = catchAsync(async (req, res, next) => {
+    let token;
+    // 1) get the token given by the user and check if it exists 
+    if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
+        token = req.headers.authorization.split(' ')[1];
+    }
+
+    console.log(token);
+
+    // 2) verification token
+
+    if (!token) {
+        return next(new AppError('You are not login! please login to get access.', 401))
+    }
+
+    // 4) check if user still exists 
+
+    // 4) check if user changed password after the token was issued 
+
+
+    next();
 })
