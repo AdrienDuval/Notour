@@ -23,6 +23,7 @@ const userSchema = new mongoose.Schema({
         minLength: 8,
         select: false,
     },
+
     passwordConfirm: {
         type: String,
         required: [false, 'A user must have a password Confirm'],
@@ -34,11 +35,13 @@ const userSchema = new mongoose.Schema({
             message: 'passwords are not the sames '
 
         }
-    }
+    },
 
+    passwordChangeAt: Date,
 })
 
 userSchema.pre('save', async function (next) {
+    console.log(this.passwordChangeAt);
     // Check if the password was modified
     if (!this.isModified('password')) return next();
     // bcrpt hasing algorithm to prevent from brute for attacks
@@ -54,6 +57,15 @@ userSchema.pre('save', async function (next) {
 userSchema.methods.correctPassword = async function (candidatePassword, userPassword) {
     return await bcrypt.compare(candidatePassword, userPassword);
 
+}
+
+userSchema.methods.changePasswordAfter = function (JWTTimestamp) {
+    if (this.passwordChangeAt) {
+        const changedTimestamp = parseInt(this.passwordChangeAt.getTime() / 1000, 10);
+        console.log(changedTimestamp, JWTTimestamp);
+        return JWTTimestamp < changedTimestamp;
+    }
+    return false
 }
 
 const User = mongoose.model('User', userSchema);
