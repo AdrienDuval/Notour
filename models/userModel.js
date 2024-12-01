@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 const validator = require('validator');
-const { validate } = require('./tourModel');
+// const { validate } = require('./tourModel');
 const bcrypt = require('bcryptjs');
 
 
@@ -17,6 +17,11 @@ const userSchema = new mongoose.Schema({
         validate: [validator.isEmail, 'Please provide a valid email']
     },
     photo: String,
+    role: {
+        type: String,
+        Enum: ['user', 'guide',  'lead-guide', 'admin'],
+        default: 'user',
+    },
     password: {
         type: String,
         required: [true, 'A user must have a password'],
