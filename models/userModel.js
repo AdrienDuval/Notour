@@ -58,6 +58,12 @@ userSchema.pre('save', async function (next) {
     //Delete the password confirm field 
     this.passwordConfirm = undefined;
     next();
+});
+
+userSchema.pre('save', function (next) {
+    if (!this.isModified('password') || this.isNew) return next();
+    this.passwordChangeAt = Date.now() - 1;
+    next();
 })
 
 // instance method
