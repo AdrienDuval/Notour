@@ -11,11 +11,22 @@ const signToken = id => {
         expiresIn: process.env.jwt_expires_IN,
     });
 }
+
+const createSendToken = (user, statusCode, res) => {
+    const token = signToken(user._id);
+
+    res.status(statusCode).json({
+        status: 'success',
+        token,
+        data: {
+            user
+        }
+    });
+}
 exports.signup = catchAsync(async (req, res, next) => {
 
     // removing this because it takes all the informations set up in the request body so basically anyone can set himself as and admin and login into the application or ser wather ever the want tot the body which is a huge seccurity issue
     // const newUser = await User.create(req.body);
-
     const newUser = await User.create({
         name: req.body.name,
         email: req.body.email,
@@ -25,15 +36,8 @@ exports.signup = catchAsync(async (req, res, next) => {
         role: req.body.role,
     });
 
-    const token = signToken(newUser._id);
+    createSendToken(newUser, 201, ress);
 
-    res.status(201).json({
-        status: 'success',
-        token,
-        data: {
-            user: newUser
-        }
-    });
 });
 
 exports.login = catchAsync(async (req, res, next) => {
@@ -58,12 +62,7 @@ exports.login = catchAsync(async (req, res, next) => {
     // 3) if everything is okay send the token to the client
 
     console.log("token", user._id)
-    const token = signToken(user._id);
-
-    res.status(200).json({
-        status: 'success',
-        token
-    });
+    createSendToken(user, 200, res);
 })
 
 exports.protect = catchAsync(async (req, res, next) => {
@@ -180,63 +179,60 @@ exports.resetPassword = catchAsync(async (req, res, next) => {
 
 
     //4) log the user in, sent the jwt
-    const token = signToken(user._id);
 
-    res.status(200).json({
-        status: 'success',
-        token
-    });
+    createSendToken(user, 201, res);
+
 });
+
+// exports.updatePassword = catchAsync(async (req, res, next) => {
+//     // 1) get the user from collection 
+//     // const hashToken = crypto.create.createHash('sha256').update(req.params.token).digest('hex');
+//     const { email, password } = req.body;
+//     //1) check if email and password exists 
+//     if (!email || !password) {
+//         return next(new AppError('Please provide email and password', 400))
+//     }
+//     const user = await User.findOne({ email }).select('+password');
+//     if (!user) {
+//         return next(new AppError('There is no user with this email please try login in again', 400))
+//     }
+//     // 2) Check if POSTed current password is correctPassword
+//     // const isPasswordCorrect = await user.correctPassword(password, user.password);
+//     if (!(await user.correctPassword(password, user.password))) {
+//         return next(new AppError('incorrect password, please enter you currentpassword', 401))
+//     }
+//     // 3) if so, update password
+//     const newPassword = req.body.newPassword;
+//     const newPasswordConfirm = req.body.newPasswordConfirm;
+
+//     console.log({ newPassword }, { newPasswordConfirm });
+//     if (newPassword != newPasswordConfirm) {
+//         return next(new AppError('new password and confirm new password does not match'), 401);
+//     }
+//     user.password = newPassword;
+//     user.passwordConfirm = newPasswordConfirm;
+
+//     await user.save();
+//     // 4) log user, send jwt
+
+//     const token = signToken(user._id);
+//     res.status(200).json({
+//         status: 'success',
+//         message: 'Password was changed successfully',
+//         token
+//     })
+// })
 
 exports.updatePassword = catchAsync(async (req, res, next) => {
     // 1) get the user from collection 
-    // const hashToken = crypto.create.createHash('sha256').update(req.params.token).digest('hex');
-    const { email, password } = req.body;
-
-    //1) check if email and password exists 
-
-    if (!email || !password) {
-        return next(new AppError('Please provide email and password', 400))
+    const user = await User.findById(req.user._id).select('+password');
+    if (!(await user.correctPassword(req.body.passwordCurrent, user.password))) {
+        return next(new AppError('Your current password is wrong.', 401))
     }
 
-    const user = await User.findOne({ email }).select('+password');
-
-
-    if (!user) {
-        return next(new AppError('There is no user with this email please try login in again', 400))
-    }
-
-    // 2) Check if POSTed current password is correctPassword
-
-    // const isPasswordCorrect = await user.correctPassword(password, user.password);
-
-    
-    if (!(await user.correctPassword(password, user.password))) {
-        return next(new AppError('incorrect password, please enter you currentpassword', 401))
-    }
-    
-    
-    
-    // 3) if so, update password
-    const newPassword = req.body.newPassword;
-    const newPasswordConfirm = req.body.newPasswordConfirm;
-    
-    console.log({ newPassword }, { newPasswordConfirm });
-    if (newPassword != newPasswordConfirm) {
-        return next(new AppError('new password and confirm new password does not match'), 401);
-    }
-
-    user.password = newPassword;
-    user.passwordConfirm = newPasswordConfirm;
-
+    user.password = req.body.password;
+    user.passwordConfrim = req.body.passwordConfirm;
     await user.save();
-    // 4) log user, send jwt
 
-    const token = signToken(user._id);
-    res.status(200).json({
-        status: 'success',
-        message: 'Password was changed successfully',
-        token
-    })
-
+    createSendToken(user, 200, res);
 })
