@@ -186,4 +186,18 @@ exports.resetPassword = catchAsync(async (req, res, next) => {
         status: 'success',
         token
     });
+});
+
+exports.updatePassword = catchAsync(async (req, res, next) => {
+    // 1) get the user from collection 
+    const hashToken = crypto.create.createHash('sha256').update(req.params.token).digest('hex');
+
+    const user = await User.findOne({ email: req.body.email });
+
+    // 2) Check if POSTed current password is correctPassword
+
+    // 3) if so, update password
+
+    // 4) log user, send jwt
+
 })
